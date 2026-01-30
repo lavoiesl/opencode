@@ -40,7 +40,7 @@ MCP (Model Context Protocol) servers provide external integrations. Secrets are 
 ### Prerequisites
 
 - [1Password CLI](https://developer.1password.com/docs/cli/get-started/) (`op`) installed and configured
-- 1Password account with access to a vault (default: "MCP")
+- 1Password account (vault name will be specified in each server's `op.env`)
 
 ### Setup
 
@@ -51,39 +51,60 @@ MCP (Model Context Protocol) servers provide external integrations. Secrets are 
    
    Edit `mcp/_config.sh` with your 1Password settings:
    ```bash
-   VAULT="MCP"  # or your preferred vault name
    ACCOUNT="your-account.1password.com"
    ```
 
-2. **Create 1Password items for MCP servers requiring secrets**:
+2. **Create MCP server folders and configuration**:
    
-   - Create items in your 1Password vault with names matching the script filenames (e.g., `slack` for `mcp/slack.sh`)
-   - Add fields with UPPERCASE names matching expected environment variables (e.g., `API_KEY`, `BOT_TOKEN`)
-   - The `_common.sh` utilities automatically extract fields matching the pattern `^[A-Z][A-Z0-9_]+$`
+   For each MCP server requiring secrets:
+   - Create folder: `mcp/<server>/`
+   - Create `mcp/<server>/mcp.sh` (server launch script)
+   - Create `mcp/<server>/op.env` with full `op://vault/item/field` references
+   
+   Example `mcp/slack/op.env`:
+   ```bash
+   SLACK_BOT_TOKEN=op://MyVault/slack/SLACK_BOT_TOKEN
+   SLACK_APP_TOKEN=op://MyVault/slack/SLACK_APP_TOKEN
+   ```
 
 3. **How it works**:
-   - Each `mcp/*.sh` script is a wrapper that launches an MCP server
-   - Scripts needing secrets source `_common.sh` and use `run_with_secrets`
-   - This generates `op://` references (e.g., `op://MCP/slack/SLACK_BOT_TOKEN`)
+   - Each MCP server has its own folder: `mcp/<server>/`
+   - The `mcp.sh` script launches the server
+   - If secrets needed, `op.env` contains full `op://` references
+   - Scripts source `_common.sh` and use `env_run`
    - `op run` resolves references at runtime, injecting secrets as environment variables
    - **Secrets never written to disk** - only exist in process memory
 
 ### MCP Script Structure
 
-Each MCP server has a corresponding shell script in `mcp/`. Scripts requiring secrets follow this pattern:
+Each MCP server has its own folder with these files:
+
+**With secrets:**
+```
+mcp/<server>/
+├── mcp.sh      # Server launch script
+└── op.env      # Full op:// secret references
+```
+
+**Without secrets:**
+```
+mcp/<server>/
+└── mcp.sh      # Server launch script only
+```
+
+Example `mcp.sh` requiring secrets:
 
 ```bash
 #!/bin/bash
 set -e
-source "$(dirname "$0")/_common.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../_common.sh"
 
-name=$(basename "$0" .sh)  # Matches 1Password item name
-
-run_with_secrets "$name" \
+env_run "$SCRIPT_DIR/op.env" \
   npx some-mcp-server@latest
 ```
 
-Scripts without secrets are simpler:
+Example `mcp.sh` without secrets:
 
 ```bash
 #!/bin/bash

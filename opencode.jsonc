@@ -37,44 +37,44 @@
     "playwright": {
       "type": "local",
       "command": [
-        "/Users/slavoie2/.config/opencode/mcp/playwright.sh"
+        "/Users/slavoie2/.config/opencode/mcp/playwright/mcp.sh"
       ],
-      "enabled": false
+      "enabled": true
     },
     "context7": {
       "type": "local",
       "command": [
-        "/Users/slavoie2/.config/opencode/mcp/context7.sh"
+        "/Users/slavoie2/.config/opencode/mcp/context7/mcp.sh"
       ],
-      "enabled": false
+      "enabled": true
     },
     "atlassian": {
       "type": "local",
       "command": [
-        "/Users/slavoie2/.config/opencode/mcp/atlassian.sh"
+        "/Users/slavoie2/.config/opencode/mcp/atlassian/mcp.sh"
       ],
-      "enabled": false
+      "enabled": true
     },
     "slack": {
-      "enabled": false,
+      "enabled": true,
       "type": "local",
       "command": [
-        "/Users/slavoie2/.config/opencode/mcp/slack.sh"
+        "/Users/slavoie2/.config/opencode/mcp/slack/mcp.sh"
       ]
     },
     "gdrive": {
       "type": "local",
       "command": [
-        "/Users/slavoie2/.config/opencode/mcp/gdrive.sh"
+        "/Users/slavoie2/.config/opencode/mcp/gdrive/mcp.sh"
       ],
-      "enabled": false
+      "enabled": true
     },
     "github": {
       "type": "local",
       "command": [
-        "/Users/slavoie2/.config/opencode/mcp/github.sh"
+        "/Users/slavoie2/.config/opencode/mcp/github/mcp.sh"
       ],
-      "enabled": false
+      "enabled": true
     }
   },
   "instructions": [

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/_common.sh"
+source "$(dirname "$SCRIPT_DIR")/_common.sh"
 
 # ==============================================================================
 # Slack MCP Server
@@ -28,8 +28,6 @@ source "$SCRIPT_DIR/_common.sh"
 #
 # ==============================================================================
 
-name=$(basename "$0" .sh)
-
-run_with_secrets "$name" \
+env_run "$SCRIPT_DIR/op.env" \
   npx -y slack-mcp-server@latest \
     --transport stdio

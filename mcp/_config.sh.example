@@ -1,5 +1,4 @@
 # 1Password configuration for MCP scripts
 # Copy this file to _config.sh and update with your values
 
-VAULT="MCP"
 ACCOUNT="your-account.1password.com"

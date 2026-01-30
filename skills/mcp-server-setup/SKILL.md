@@ -19,25 +19,27 @@ metadata:
 
 ```
 ~/.config/opencode/
-├── opencode.json           # Main config file
+├── opencode.jsonc          # Main config file
 └── mcp/
     ├── _config.sh          # 1Password account config (gitignored)
     ├── _config.sh.example  # Template for _config.sh
     ├── _common.sh          # Shared utilities
-    ├── <server>.sh         # One script per MCP server
+    ├── <server>/           # One folder per MCP server
+    │   ├── mcp.sh         # Server launch script
+    │   └── op.env         # 1Password secret references (if needed)
     └── ...
 ```
 
-## opencode.json MCP Configuration
+## opencode.jsonc MCP Configuration
 
 Each MCP server is configured as a local command pointing to a wrapper script:
 
-```json
+```jsonc
 {
   "mcp": {
     "<name>": {
       "type": "local",
-      "command": ["/Users/<user>/.config/opencode/mcp/<name>.sh"],
+      "command": ["/Users/<user>/.config/opencode/mcp/<name>/mcp.sh"],
       "enabled": true
     }
   }
@@ -51,11 +53,12 @@ Each MCP server is configured as a local command pointing to a wrapper script:
 Configuration file for 1Password account settings (gitignored):
 
 ```bash
-VAULT="MCP"
 ACCOUNT="your-account.1password.com"
 ```
 
 Copy `_config.sh.example` to `_config.sh` and update with your values.
+
+**Note**: The `VAULT` configuration was removed. Vault names are now part of the full `op://` references in each server's `op.env` file.
 
 ### _common.sh
 
@@ -65,56 +68,59 @@ The `_common.sh` file provides utilities for secret management:
 #!/bin/bash
 # Common utilities for MCP scripts
 
-source "$(dirname "$0")/_config.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_config.sh"
 
-# Generate env file content with op:// references for an item
-# Usage: get_env_refs <1password_item_name>
-# Output: ENV_VAR=op://VAULT/ITEM/ENV_VAR (one per line)
-get_env_refs() {
-  local item_name="$1"
-  op item get "$item_name" --vault "$VAULT" --account "$ACCOUNT" --format json | \
-    jq -r --arg vault "$VAULT" --arg item "$item_name" \
-      '.fields[] | select(.value and (.label | test("^[A-Z][A-Z0-9_]+$"))) | "\(.label)=op://\($vault)/\($item)/\(.label)"'
-}
-
-# Run a command with secrets from 1Password
-# Usage: run_with_secrets <1password_item_name> <command> [args...]
+# Run a command with secrets from 1Password using op.env file
+# Usage: env_run <env_file> <command> [args...]
 #
-# Generates op:// references that `op run` resolves at runtime
+# env_file: Path to the op.env file containing op:// secret references
+# op.env contains op:// references that `op run` resolves at runtime
 # (secrets never written to disk)
-run_with_secrets() {
-  local item_name="$1"
+env_run() {
+  local env_file="$1"
   shift
+  
+  if [[ ! -f "$env_file" ]]; then
+    echo "Error: $env_file not found" >&2
+    exit 1
+  fi
 
-  exec op run --account "$ACCOUNT" --env-file=<(get_env_refs "$item_name") -- "$@"
+  exec op run --account "$ACCOUNT" --env-file="$env_file" -- "$@"
 }
 ```
 
 Key features:
-- `get_env_refs` generates `op://` secret references (not actual values)
+- `env_run` accepts an explicit path to the `op.env` file
+- The `op.env` file contains full `op://vault/item/field` references (not just field names)
 - `op run` resolves the references at runtime, injecting secrets into env vars
-- Process substitution `<(...)` avoids writing anything sensitive to disk
-- The jq filter `^[A-Z][A-Z0-9_]+$` extracts only uppercase env var fields, filtering out 1Password metadata
+- Secrets never written to disk - only exist in process memory
 
 ## MCP Server Script Pattern
 
-Scripts that require secrets follow this pattern:
+Each MCP server lives in its own folder: `mcp/<server>/`
+
+### With Secrets (requires op.env)
 
 ```bash
 #!/bin/bash
 set -e
-source "$(dirname "$0")/_common.sh"
-
-name=$(basename "$0" .sh)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../_common.sh"
 
 # <Description> MCP
-run_with_secrets "$name" \
+env_run "$SCRIPT_DIR/op.env" \
   <command> [args...]
 ```
 
-The `name` variable automatically matches the script filename (without `.sh`), which should match the 1Password item name.
+The `op.env` file in the same folder contains full references:
+```bash
+# mcp/<server>/op.env
+SOME_TOKEN=op://MyVault/item-name/SOME_TOKEN
+API_KEY=op://MyVault/item-name/API_KEY
+```
 
-Scripts without secrets are simpler:
+### Without Secrets
 
 ```bash
 #!/bin/bash
@@ -125,12 +131,22 @@ set -e
 exec <command> [args...]
 ```
 
+No `op.env` file needed.
+
 ## 1Password Setup
 
-1. Create a vault named "MCP" in 1Password (or configure a different vault in `_config.sh`)
-2. Create items with names matching the script filenames (e.g., "slack", "github", "gdrive")
-3. Add fields with uppercase names matching expected env vars (e.g., `GITHUB_PERSONAL_ACCESS_TOKEN`)
-4. Copy `mcp/_config.sh.example` to `mcp/_config.sh` and update with your 1Password account
+1. Create items in 1Password with fields matching expected env vars (e.g., `GITHUB_PERSONAL_ACCESS_TOKEN`)
+2. Copy `mcp/_config.sh.example` to `mcp/_config.sh` and update with your 1Password account
+3. For each MCP server needing secrets:
+   - Create folder: `mcp/<server>/`
+   - Create `mcp/<server>/mcp.sh` (the server launch script)
+   - Create `mcp/<server>/op.env` with full `op://vault/item/field` references
+
+Example `op.env`:
+```bash
+SLACK_BOT_TOKEN=op://MyVault/slack/SLACK_BOT_TOKEN
+SLACK_APP_TOKEN=op://MyVault/slack/SLACK_APP_TOKEN
+```
 
 ## Remote MCP Servers (mcp-remote)
 
@@ -157,18 +173,30 @@ exec npx @playwright/mcp@latest \
   --executable-path "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ```
 
+Folder structure:
+```
+mcp/playwright/
+└── mcp.sh
+```
+
 ### Local MCP (with secrets)
 ```bash
 #!/bin/bash
 set -e
-source "$(dirname "$0")/_common.sh"
-
-name=$(basename "$0" .sh)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../_common.sh"
 
 # Slack MCP
-run_with_secrets "$name" \
+env_run "$SCRIPT_DIR/op.env" \
   npx -y slack-mcp-server@latest \
     --transport stdio
+```
+
+Folder structure:
+```
+mcp/slack/
+├── mcp.sh
+└── op.env    # Contains: SLACK_BOT_TOKEN=op://MyVault/slack/SLACK_BOT_TOKEN
 ```
 
 ### Remote MCP (OAuth, no secrets)
@@ -182,19 +210,31 @@ exec npx mcp-remote \
   "https://mcp.atlassian.com/v1/sse"
 ```
 
+Folder structure:
+```
+mcp/atlassian/
+└── mcp.sh
+```
+
 ### Remote MCP (with API key)
 ```bash
 #!/bin/bash
 set -e
-source "$(dirname "$0")/_common.sh"
-
-name=$(basename "$0" .sh)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/../_common.sh"
 
 # GitHub MCP
-run_with_secrets "$name" \
+env_run "$SCRIPT_DIR/op.env" \
   npx mcp-remote \
     "https://api.githubcopilot.com/mcp/" \
     --header "Authorization:Bearer \${GITHUB_PERSONAL_ACCESS_TOKEN}"
+```
+
+Folder structure:
+```
+mcp/github/
+├── mcp.sh
+└── op.env    # Contains: GITHUB_PERSONAL_ACCESS_TOKEN=op://MyVault/github/GITHUB_PERSONAL_ACCESS_TOKEN
 ```
 
 ## When to use me

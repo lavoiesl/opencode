@@ -1,5 +1,11 @@
 {
   "dependencies": {
-    "@opencode-ai/plugin": "1.1.44"
+    "@franlol/opencode-md-table-formatter": "latest",
+    "@nick-vi/opencode-type-inject": "latest",
+    "@opencode-ai/plugin": "1.1.44",
+    "@plannotator/opencode": "latest",
+    "@tarquinen/opencode-dcp": "latest",
+    "oh-my-opencode": "latest",
+    "opencode-wakatime": "latest"
   }
 }

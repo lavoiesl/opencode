@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/_common.sh"
+source "$(dirname "$SCRIPT_DIR")/_common.sh"
 
 # ==============================================================================
 # GitHub MCP Server (via GitHub Copilot)
@@ -30,9 +30,7 @@ source "$SCRIPT_DIR/_common.sh"
 #
 # ==============================================================================
 
-name=$(basename "$0" .sh)
-
-run_with_secrets "$name" \
+env_run "$SCRIPT_DIR/op.env" \
   npx mcp-remote \
     "https://api.githubcopilot.com/mcp/" \
     --header "Authorization:Bearer \${GITHUB_PERSONAL_ACCESS_TOKEN}"
