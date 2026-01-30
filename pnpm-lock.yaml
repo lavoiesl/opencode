@@ -1,0 +1,35 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@opencode-ai/plugin':
+        specifier: 1.1.42
+        version: 1.1.42
+
+packages:
+
+  '@opencode-ai/plugin@1.1.42':
+    resolution: {integrity: sha512-pKPGUSo980tlpfkeK1heKi+FyY5uAa8CffQ8CEvfmTiHkHhZaw0Cz79cSi2iWYxLzGgx4pQWUoq2YdVBiMWYHw==}
+
+  '@opencode-ai/sdk@1.1.42':
+    resolution: {integrity: sha512-QuTJgnzmsQ+CF/mr9nu+FQGv2cMwGMsnWd7eOF0YLuXKOzpx+xlBkUGdZz8l0n3I+7ix8iiMZbTw4laAG8vIqA==}
+
+  zod@4.1.8:
+    resolution: {integrity: sha512-5R1P+WwQqmmMIEACyzSvo4JXHY5WiAFHRMg+zBZKgKS+Q1viRa0C1hmUKtHltoIFKtIdki3pRxkmpP74jnNYHQ==}
+
+snapshots:
+
+  '@opencode-ai/plugin@1.1.42':
+    dependencies:
+      '@opencode-ai/sdk': 1.1.42
+      zod: 4.1.8
+
+  '@opencode-ai/sdk@1.1.42': {}
+
+  zod@4.1.8: {}
