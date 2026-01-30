@@ -39,24 +39,24 @@
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/playwright.sh"
       ],
-      "enabled": true
+      "enabled": false
     },
     "context7": {
       "type": "local",
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/context7.sh"
       ],
-      "enabled": true
+      "enabled": false
     },
     "atlassian": {
       "type": "local",
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/atlassian.sh"
       ],
-      "enabled": true
+      "enabled": false
     },
     "slack": {
-      "enabled": true,
+      "enabled": false,
       "type": "local",
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/slack.sh"
@@ -67,14 +67,14 @@
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/gdrive.sh"
       ],
-      "enabled": true
+      "enabled": false
     },
     "github": {
       "type": "local",
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/github.sh"
       ],
-      "enabled": true
+      "enabled": false
     }
   },
   "instructions": [
