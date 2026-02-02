@@ -46,7 +46,7 @@
       "command": [
         "/Users/slavoie2/.config/opencode/mcp/context7/mcp.sh"
       ],
-      "enabled": true
+      "enabled": false
     },
     "atlassian": {
       "type": "local",
